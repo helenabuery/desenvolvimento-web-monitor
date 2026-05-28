@@ -211,3 +211,7 @@ vanilla + bcryptjs.
 
 # Utilização de IA
 Utilização de inteligencia artificial para correção de código e para adicionar frameworks/bibliotecas usados. 
+
+# Membros da atividade: 
+-> Ana Helena Viana 
+-> Letícia Pereira França 

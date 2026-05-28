@@ -1,19 +1,18 @@
 # Monitor de Mudanças em Sites
-
-WatchDiff — Monitor de Mudanças em
+WebCoruja — Monitor de Mudanças em
 Sites
 Protótipo frontend de um sistema que monitora alterações em páginas web,
 detecta diffs linha a linha e demonstra práticas reais de segurança como SSRF
 guard, bcrypt e JWT.
 
 # Visão geral
-WatchDiff permite cadastrar URLs para monitorar, executa verificações periódicas
+WebCoruja permite cadastrar URLs para monitorar, executa verificações periódicas
 simuladas e exibe as diferenças de conteúdo entre snapshots em um visualizador de diff
 colorido. O projeto foi construído como protótipo educacional para demonstrar as camadas
 de uma aplicação real: frontend, lógica de negócio, dados persistidos e segurança.
 
 # Estrutura de arquivos
-watchdiff/
+src/
 ├── index.html # Estrutura HTML — telas, views, modal, containers
 ├── style.css # Estilos — variáveis, componentes, animações
 └── app.js # Lógica — auth, SSRF guard, diff engine, renders, localStorage

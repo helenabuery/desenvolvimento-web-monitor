@@ -210,4 +210,4 @@ de um sistema de monitoramento de sites. Desenvolvido com HTML, CSS e JavaScript
 vanilla + bcryptjs.
 
 # Utilização de IA
-Utilização de inteligencia artificial para correção de código e para adicionar frameworks usados. 
+Utilização de inteligencia artificial para correção de código e para adicionar frameworks/bibliotecas usados. 

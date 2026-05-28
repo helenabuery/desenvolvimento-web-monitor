@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebCoruja</title>
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Geist:wght@300;400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Dependências (CDN) -->
+  <!-- bcryptjs: hash seguro de senhas no navegador (demo) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ================================================
+    TELA DE LOGIN / REGISTRO
+  ================================================ -->
+  <div class="login-wrap" id="loginScreen">
+    <div class="login-card">
+
+      <div class="login-logo">Web<span>Coruja</span></div>
+      <div class="login-sub">// monitor de mudanças em sites</div>
+
+      <!-- Abas Login / Criar conta -->
+      <div class="tab-row">
+        <button class="tab active" onclick="switchAuthTab('login', this)">entrar</button>
+        <button class="tab" onclick="switchAuthTab('register', this)">criar conta</button>
+      </div>
+
+      <!-- Formulário de Login -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label class="form-label">email</label>
+          <input
+            class="form-input"
+            type="email"
+            id="loginEmail"
+            placeholder="seu@email.com"
+            value="demo@watchdiff.io">
+        </div>
+        <div class="form-group">
+          <label class="form-label">senha</label>
+          <input
+            class="form-input"
+            type="password"
+            id="loginPass"
+            placeholder="••••••••"
+            value="demo1234">
+        </div>
+        <button
+          class="btn btn-primary"
+          style="width:100%; justify-content:center; padding:10px"
+          onclick="doLogin()">
+          <span>→</span> entrar
+        </button>
+      </div>
+
+      <!-- Formulário de Registro -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label class="form-label">nome</label>
+          <input class="form-input" type="text" id="regName" placeholder="Seu Nome">
+        </div>
+        <div class="form-group">
+          <label class="form-label">email</label>
+          <input class="form-input" type="email" id="regEmail" placeholder="seu@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">senha</label>
+          <input
+            class="form-input"
+            type="password"
+            id="regPass"
+            placeholder="mínimo 8 caracteres">
+          <div class="form-hint" id="passStrength"></div>
+        </div>
+        <button
+          class="btn btn-primary"
+          style="width:100%; justify-content:center; padding:10px"
+          onclick="doRegister()">
+          criar conta
+        </button>
+      </div>
+
+      <div class="login-divider">bcrypt · JWT · SSRF guard</div>
+      <div style="font-size:11px; color:var(--text3); text-align:center; font-family:var(--mono)">
+        demo: demo@watchdiff.io / demo1234
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ================================================
+    APP PRINCIPAL (visível após login)
+  ================================================ -->
+  <div class="app" id="appScreen" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <h1>Web<span>Coruja</span></h1>
+        <p>// v1.0.0 · seguro</p>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-section">
+          <div class="nav-label">painel</div>
+          <a class="nav-item active" onclick="showView('dashboard', this)">⊞ painel</a>
+          <a class="nav-item" onclick="showView('watches', this)">◎ monitoramentos</a>
+          <a class="nav-item" onclick="showView('diffs', this)">⟷ diff viewer</a>
+        </div>
+
+        <div class="nav-section" style="margin-top:8px">
+          <div class="nav-label">sites ativos</div>
+          <!-- Preenchido dinamicamente por renderSidebar() -->
+          <div id="sidebarWatches"></div>
+        </div>
+
+        <div class="nav-section" style="margin-top:8px">
+          <div class="nav-label">sistema</div>
+          <a class="nav-item" onclick="showView('security', this)">◈ segurança</a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar" id="userAvatar">DW</div>
+          <div>
+            <div class="name" id="userName">Demo User</div>
+            <div class="role">free plan</div>
+          </div>
+          <button
+            class="btn btn-sm"
+            style="margin-left:auto; padding:4px 8px; font-size:11px"
+            onclick="doLogout()">
+            sair
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <div class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <h2 id="viewTitle">dashboard</h2>
+        <div class="topbar-actions">
+          <button class="btn btn-sm" id="scanAllBtn" onclick="scanAll()">⟳ verificar todos</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ novo monitor</button>
+        </div>
+      </div>
+
+      <!-- Conteúdo das Views -->
+      <div class="content">
+
+        <!-- ==========================================
+          VIEW: DASHBOARD
+        =========================================== -->
+        <div class="view active" id="view-dashboard">
+
+          <!-- Cards de métricas -->
+          <div class="metrics">
+            <div class="metric">
+              <div class="metric-label">total monit.</div>
+              <div class="metric-value" id="mTotal">0</div>
+              <div class="metric-sub">sites cadastrados</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">mudanças</div>
+              <div class="metric-value metric-warn" id="mChanges">0</div>
+              <div class="metric-sub">últimas 24h</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">ativos</div>
+              <div class="metric-value metric-up" id="mActive">0</div>
+              <div class="metric-sub">monitorando agora</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">erros</div>
+              <div class="metric-value metric-down" id="mErrors">0</div>
+              <div class="metric-sub">falhas de acesso</div>
+            </div>
+          </div>
+
+          <!-- Feed de atividade -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">atividade recente</div>
+            </div>
+            <div class="card" style="padding:0">
+              <div class="timeline" style="padding:20px 20px 4px 36px" id="activityFeed">
+                <div class="empty" style="padding:30px">
+                  <div class="empty-icon">◎</div>
+                  <h3>sem atividade ainda</h3>
+                  <p>adicione um site para monitorar</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /view-dashboard -->
+
+
+        <!-- ==========================================
+          VIEW: MONITORAMENTOS
+        =========================================== -->
+        <div class="view" id="view-watches">
+          <div class="section">
+            <div class="card" style="padding:0; overflow:hidden">
+              <table class="watch-table" id="watchTable">
+                <thead>
+                  <tr>
+                    <th>nome / url</th>
+                    <th>status</th>
+                    <th>intervalo</th>
+                    <th>última verificação</th>
+                    <th>mudanças</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="watchTableBody">
+                  <tr>
+                    <td colspan="6">
+                      <div class="empty">
+                        <div class="empty-icon">◎</div>
+                        <h3>nenhum monitor</h3>
+                        <p>clique em "novo monitor" para começar</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div><!-- /view-watches -->
+
+
+        <!-- ==========================================
+          VIEW: DIFF VIEWER
+        =========================================== -->
+        <div class="view" id="view-diffs">
+          <div class="section">
+
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-title">selecionar monitor</div>
+              <div style="display:flex; gap:10px; align-items:center">
+                <select class="form-input" id="diffSelect" style="flex:1" onchange="loadDiff()">
+                  <option value="">— escolha um site —</option>
+                </select>
+                <button class="btn" onclick="loadDiff()">ver diff</button>
+              </div>
+            </div>
+
+            <div id="diffOutput">
+              <div class="empty">
+                <div class="empty-icon">⟷</div>
+                <h3>nenhum diff selecionado</h3>
+                <p>escolha um site com mudanças detectadas</p>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /view-diffs -->
+
+
+        <!-- ==========================================
+          VIEW: SEGURANÇA
+        =========================================== -->
+        <div class="view" id="view-security">
+
+          <!-- Grid de proteções ativas -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">proteções ativas</div>
+            </div>
+            <div class="security-grid">
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-ok">✓</div>
+                  <div class="sec-name">JWT Authentication</div>
+                </div>
+                <div class="sec-desc">
+                  Tokens HS256 com expiração de 7 dias. Middleware valida em todas as rotas protegidas.
+                </div>
+              </div>
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-ok">✓</div>
+                  <div class="sec-name">SSRF Guard</div>
+                </div>
+                <div class="sec-desc">
+                  URLs com IPs privados (10.x, 192.168.x, 127.x) são bloqueadas antes do fetch.
+                </div>
+              </div>
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-ok">✓</div>
+                  <div class="sec-name">bcrypt · senhas</div>
+                </div>
+                <div class="sec-desc">
+                  Salt rounds = 12. Senhas nunca armazenadas em plain text. Hash irreversível.
+                </div>
+              </div>
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-ok">✓</div>
+                  <div class="sec-name">Rate Limiting</div>
+                </div>
+                <div class="sec-desc">
+                  Máx. 10 watches por usuário. Máx. 1 scan/min por URL. Previne abuso.
+                </div>
+              </div>
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-ok">✓</div>
+                  <div class="sec-name">DOMPurify</div>
+                </div>
+                <div class="sec-desc">
+                  HTML capturado é sanitizado antes de renderizar. Previne XSS via conteúdo externo.
+                </div>
+              </div>
+
+              <div class="sec-item">
+                <div class="sec-item-header">
+                  <div class="sec-icon sec-warn">!</div>
+                  <div class="sec-name">HTTPS Only</div>
+                </div>
+                <div class="sec-desc">
+                  Apenas https:// aceito. URLs http:// são rejeitadas na validação.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Testador SSRF interativo -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">testar SSRF guard</div>
+            </div>
+            <div class="card">
+              <div class="card-title">simulador de validação de URL</div>
+              <p style="font-size:13px; color:var(--text2); margin-bottom:12px">
+                Teste se uma URL passaria pela validação de segurança do backend.
+              </p>
+              <div style="display:flex; gap:10px">
+                <input
+                  class="form-input"
+                  id="ssrfInput"
+                  placeholder="ex: http://192.168.1.1 ou https://example.com"
+                  style="flex:1">
+                <button class="btn btn-primary" onclick="testSSRF()">validar</button>
+              </div>
+              <div id="ssrfResult"></div>
+              <div style="margin-top:16px">
+                <div style="font-size:11px; color:var(--text3); font-family:var(--mono); margin-bottom:8px">
+                  URLs bloqueadas (tente):
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px">
+                  <button class="btn btn-sm" onclick="setSSRF('http://192.168.1.1')">192.168.1.1</button>
+                  <button class="btn btn-sm" onclick="setSSRF('http://10.0.0.1/secret')">10.0.0.1/secret</button>
+                  <button class="btn btn-sm" onclick="setSSRF('http://127.0.0.1:5432')">localhost:5432</button>
+                  <button class="btn btn-sm" onclick="setSSRF('http://169.254.169.254/latest/meta-data')">AWS metadata</button>
+                  <button class="btn btn-sm" onclick="setSSRF('ftp://files.internal')">protocolo FTP</button>
+                  <button class="btn btn-sm" onclick="setSSRF('https://example.com')">✓ válida</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Demo bcrypt -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">hash de senha (bcrypt demo)</div>
+            </div>
+            <div class="card">
+              <div class="card-title">demonstração bcrypt</div>
+              <p style="font-size:13px; color:var(--text2); margin-bottom:12px">
+                Veja como senhas são armazenadas de forma segura com bcrypt (salt rounds = 10 neste demo).
+              </p>
+              <div style="display:flex; gap:10px; margin-bottom:10px">
+                <input
+                  class="form-input"
+                  id="bcryptInput"
+                  placeholder="digite uma senha"
+                  style="flex:1">
+                <button class="btn btn-primary" onclick="hashPassword()">gerar hash</button>
+              </div>
+              <div
+                id="bcryptResult"
+                style="font-family:var(--mono); font-size:11px; color:var(--text3); word-break:break-all">
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /view-security -->
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+
+  <!-- ================================================
+    MODAL: ADICIONAR MONITOR
+  ================================================ -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+
+      <div class="modal-header">
+        <div class="modal-title">novo monitoramento</div>
+        <button class="btn btn-icon" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">nome do monitor</label>
+        <input class="form-input" id="newName" placeholder="ex: Preço do produto X">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input class="form-input" id="newUrl" placeholder="https://exemplo.com/pagina">
+        <div class="form-hint" id="urlValidation"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">intervalo</label>
+          <select class="form-input" id="newInterval">
+            <option value="1">1 minuto (demo)</option>
+            <option value="60" selected>1 hora</option>
+            <option value="360">6 horas</option>
+            <option value="1440">24 horas</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">seletor CSS (opcional)</label>
+          <input class="form-input" id="newSelector" placeholder="ex: .price, #content">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">email para alertas</label>
+        <input class="form-input" id="newEmail" placeholder="alerta@email.com">
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px">
+        <button class="btn" onclick="closeModal()">cancelar</button>
+        <button class="btn btn-primary" onclick="addWatch()">+ adicionar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ================================================
+    CONTAINER DE TOASTS
+  ================================================ -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- JavaScript da aplicação (carregado por último) -->
+  <script src="app.js"></script>
+
+</body>
+</html>

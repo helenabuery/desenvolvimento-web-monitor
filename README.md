@@ -181,12 +181,18 @@ necessário:
 ● Backend real (Node.js + Fastify ou similar) para executar o scraping fora do browser
 
 ● Puppeteer rodando server-side para capturar páginas com JavaScript
+
 ● PostgreSQL com tabelas users, watches e snapshots (com índices em
 watch_id e captured_at)
+
 ● Nodemailer ou serviço de email (SendGrid, Resend) para alertas reais
+
 ● JWT verificado no servidor com jsonwebtoken, não simulado no cliente
+
 ● SSRF guard no backend via resolução DNS antes do fetch (não apenas regex)
+
 ● BullMQ + Redis para fila de jobs de scan com retry e dead-letter queue
+
 ● HTTPS obrigatório em produção com certificado TLS
 
 # Roadmap sugerido
@@ -202,3 +208,6 @@ PDF.
 Protótipo criado como demonstração das camadas frontend, backend, dados e segurança
 de um sistema de monitoramento de sites. Desenvolvido com HTML, CSS e JavaScript
 vanilla + bcryptjs.
+
+# Utilização de IA
+Utilização de inteligencia artificial para correção de código e para adicionar frameworks usados. 
